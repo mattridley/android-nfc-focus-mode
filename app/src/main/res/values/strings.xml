@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">NFC Focus Mode</string>
+    <string name="accessibility_desc">Used to detect app launches and block non-whitelisted apps during focus mode.</string>
+</resources>
