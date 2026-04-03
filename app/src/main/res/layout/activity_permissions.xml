@@ -3,80 +3,73 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:padding="16dp"
+    android:padding="24dp"
+    android:gravity="center"
     android:fitsSystemWindows="true">
 
     <TextView
-        android:id="@+id/statusText"
-        android:layout_width="match_parent"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Focus Mode: OFF"
-        android:textSize="22sp"
+        android:text="Permissions Required"
+        android:textSize="24sp"
         android:textStyle="bold"
-        android:gravity="center"
-        android:layout_marginTop="16dp"
-        android:layout_marginBottom="16dp"
+        android:layout_marginBottom="32dp"
         android:textColor="?android:attr/textColorPrimary"/>
 
-    <LinearLayout
-        android:layout_width="match_parent"
+    <TextView
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:layout_marginBottom="16dp">
+        android:text="This app needs two special permissions to function correctly:"
+        android:gravity="center"
+        android:layout_marginBottom="24dp"
+        android:textColor="?android:attr/textColorPrimary"/>
 
-        <Button
-            android:id="@+id/btnEnrollTag"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="Enroll Tag"
-            android:layout_marginEnd="8dp"/>
-
-        <Button
-            android:id="@+id/btnUnrollTag"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="Unroll Tag"/>
-
-    </LinearLayout>
-
+    <!-- Overlay Permission -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:gravity="center_vertical"
-        android:layout_marginBottom="24dp">
-
-        <EditText
-            android:id="@+id/editMasterPin"
+        android:layout_marginBottom="16dp">
+        <TextView
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:hint="Set Master PIN (e.g. 1234)"
-            android:inputType="numberPassword"
-            android:maxLength="4" />
-
+            android:text="1. Display over other apps"
+            android:textColor="?android:attr/textColorPrimary"/>
         <Button
-            android:id="@+id/btnSavePin"
+            android:id="@+id/btnOverlayPermission"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Save PIN"
-            android:layout_marginStart="8dp"/>
+            android:text="Grant"/>
     </LinearLayout>
 
-    <TextView
+    <!-- Accessibility Permission -->
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Allowed Apps List:"
-        android:textStyle="bold"
-        android:layout_marginBottom="8dp"
-        android:textColor="?android:attr/textColorPrimary"/>
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_marginBottom="32dp">
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="2. Accessibility Service"
+            android:textColor="?android:attr/textColorPrimary"/>
+        <Button
+            android:id="@+id/btnAccessibilityPermission"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Grant"/>
+    </LinearLayout>
 
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/recyclerView"
+    <Button
+        android:id="@+id/btnContinue"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1" />
+        android:layout_height="wrap_content"
+        android:text="Continue to App"
+        android:enabled="false"
+        style="@style/Widget.AppCompat.Button.Colored"/>
 
 </LinearLayout>

@@ -3,9 +3,9 @@ package com.example.nfcappblocker
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.content.SharedPreferences
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
-import android.nfc.NdefMessage
 import android.nfc.NfcAdapter
 import android.nfc.Tag
 import android.os.Bundle
@@ -24,7 +24,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.nio.charset.Charset
 
 class MainActivity : AppCompatActivity() {
 
@@ -36,7 +35,12 @@ class MainActivity : AppCompatActivity() {
     private var isEnrollMode = false
     private var isUnrollMode = false
 
-    private val TOGGLE_PAYLOAD = "APP_BLOCKER_TOGGLE"
+    private lateinit var sharedPrefs: SharedPreferences
+    private val prefListener = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
+        if (key == "isBlockedMode") {
+            runOnUiThread { updateStatusUI() }
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -44,6 +48,8 @@ class MainActivity : AppCompatActivity() {
 
         nfcAdapter = NfcAdapter.getDefaultAdapter(this)
         db = AppDatabase.getDatabase(this)
+        sharedPrefs = getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
+        sharedPrefs.registerOnSharedPreferenceChangeListener(prefListener)
 
         statusText = findViewById(R.id.statusText)
         recyclerView = findViewById(R.id.recyclerView)
@@ -52,7 +58,6 @@ class MainActivity : AppCompatActivity() {
         val editMasterPin = findViewById<EditText>(R.id.editMasterPin)
         val btnSavePin = findViewById<Button>(R.id.btnSavePin)
 
-        val sharedPrefs = getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
         val currentPin = sharedPrefs.getString("master_pin", "")
         editMasterPin.setText(currentPin)
 
@@ -113,13 +118,13 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun updateStatusUI() {
-        val sharedPrefs = getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
         val isBlockedMode = sharedPrefs.getBoolean("isBlockedMode", false)
         statusText.text = if (isBlockedMode) "Focus Mode: ON" else "Focus Mode: OFF"
     }
 
     override fun onResume() {
         super.onResume()
+        updateStatusUI()
         val intent = Intent(this, javaClass).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
         val pendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_MUTABLE)
         nfcAdapter.enableForegroundDispatch(this, pendingIntent, null, null)
@@ -130,10 +135,15 @@ class MainActivity : AppCompatActivity() {
         nfcAdapter.disableForegroundDispatch(this)
     }
 
+    override fun onDestroy() {
+        super.onDestroy()
+        sharedPrefs.unregisterOnSharedPreferenceChangeListener(prefListener)
+    }
+
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         val tag = intent.getParcelableExtra<Tag>(NfcAdapter.EXTRA_TAG) ?: return
-        val tagId = bytesToHexString(tag.id)
+        val tagId = NfcUtils.bytesToHexString(tag.id)
 
         lifecycleScope.launch {
             if (isEnrollMode) {
@@ -145,9 +155,8 @@ class MainActivity : AppCompatActivity() {
                 Toast.makeText(this@MainActivity, "Tag Unrolled: $tagId", Toast.LENGTH_SHORT).show()
                 isUnrollMode = false
             } else {
-                // Regular tap to toggle
                 if (db.appDao().isTagEnrolled(tagId)) {
-                    processNfcIntent(intent)
+                    toggleFocusMode()
                 } else {
                     Toast.makeText(this@MainActivity, "Tag not enrolled!", Toast.LENGTH_SHORT).show()
                 }
@@ -155,44 +164,10 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun processNfcIntent(intent: Intent) {
-        val rawMsgs = intent.getParcelableArrayExtra(NfcAdapter.EXTRA_NDEF_MESSAGES)
-        if (rawMsgs != null) {
-            val msg = rawMsgs[0] as NdefMessage
-            val payload = String(msg.records[0].payload, Charset.forName("UTF-8"))
-            
-            if (payload.contains(TOGGLE_PAYLOAD)) {
-                toggleFocusMode()
-            }
-        } else {
-            // For tags that don't have NDEF but are enrolled, we might still want to toggle
-            // Or we can require NDEF. For now, let's just toggle if it's enrolled.
-            toggleFocusMode()
-        }
-    }
-
     private fun toggleFocusMode() {
-        val sharedPrefs = getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
         val currentMode = sharedPrefs.getBoolean("isBlockedMode", false)
         val newMode = !currentMode
         sharedPrefs.edit().putBoolean("isBlockedMode", newMode).apply()
-        updateStatusUI()
         Toast.makeText(this, "Focus Mode: ${if (newMode) "ON" else "OFF"}", Toast.LENGTH_SHORT).show()
-    }
-
-    private fun bytesToHexString(src: ByteArray): String {
-        val stringBuilder = StringBuilder("")
-        if (src.isEmpty()) {
-            return ""
-        }
-        for (i in src.indices) {
-            val v = src[i].toInt() and 0xFF
-            val hv = Integer.toHexString(v)
-            if (hv.length < 2) {
-                stringBuilder.append(0)
-            }
-            stringBuilder.append(hv)
-        }
-        return stringBuilder.toString().uppercase()
     }
 }
