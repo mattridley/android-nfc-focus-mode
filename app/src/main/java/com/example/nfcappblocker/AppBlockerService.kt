@@ -137,9 +137,18 @@ class AppBlockerService : AccessibilityService() {
     private fun isSystemPackage(packageName: String): Boolean {
         val systemApps = listOf(
             "com.android.settings",
-            "com.google.android.settings"
+            "com.google.android.settings",
+            "com.android.dialer",
+            "com.google.android.dialer",
+            "com.samsung.android.dialer",
+            "com.android.phone",
+            "com.android.server.telecom",
+            "com.samsung.android.incallui"
         )
-        return systemApps.contains(packageName)
+        if (systemApps.contains(packageName)) return true
+        if (packageName.lowercase().contains("dialer")) return true
+        if (packageName.lowercase().contains("incallui")) return true
+        return false
     }
 
     private fun isIgnoredPackage(packageName: String): Boolean {
